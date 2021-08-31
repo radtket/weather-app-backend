@@ -12,15 +12,23 @@ const weather = async (req, res) => {
     const [one, { data }] = await Promise.all([
       geocoder
         .reverse({ lat: latitude, lon: longitude })
-        .then(([{ city, administrativeLevels, country, countryCode }]) => ({
-          city,
-          country,
-          countryCode,
-          county: administrativeLevels.level1short,
-          latitude,
-          longitude,
-          query: `${city}, ${administrativeLevels.level1long}, ${administrativeLevels.level2long}, cityscape, scenery, city`,
-        }))
+        .then(([{ city, administrativeLevels, country, countryCode }]) => {
+          const {
+            level1short: county,
+            level1long,
+            level2long,
+          } = administrativeLevels;
+
+          return {
+            city,
+            country,
+            countryCode,
+            county,
+            latitude,
+            longitude,
+            query: `${city}, ${level1long}, ${level2long}, cityscape, scenery, city`,
+          };
+        })
         .then(async ({ query, ...payload }) =>
           axios("https://api.pexels.com/v1/search", {
             headers: {
@@ -29,6 +37,7 @@ const weather = async (req, res) => {
             params: {
               query,
               per_page: 1,
+              local: "en-US",
             },
           }).then((item) => ({
             ...payload,
